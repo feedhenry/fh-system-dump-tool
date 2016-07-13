@@ -14,23 +14,19 @@ DATESTAMP=$(date +%Y-%m-%d_%H%M%S)
 REPORT_DIR=./reports
 REPORT_ARCHIVE=${REPORT_DIR}/${DATESTAMP}
 DATA_DUMP_DIR=${REPORT_ARCHIVE}/data
-OC_RESOURCES=(dc svc pods events)
+OC_RESOURCES=(dc svc events)
 
 ###################
 # Functions
 ###################
-function oc_get_project_resources {    
-  local PROJECTS
-  local PROJECT
-  local RESOURCE
-  PROJECTS=$(oc_get_projects)
+function oc_get_project_data {
+  PROJECTS=$(oc_get_projects) 
   for PROJECT in ${PROJECTS}; do
-    PROJECT_DIR="${DATA_DUMP_DIR}/projects/${PROJECT}/"
-    echo "Retrieving OC resources for project: ${PROJECT}"
-    mkdir -p ${PROJECT_DIR} 
-    for RESOURCE in ${OC_RESOURCES[@]}; do
-      oc get ${RESOURCE} -o json -n ${PROJECT} > "${DATA_DUMP_DIR}/projects/${PROJECT}/${RESOURCE}.json"
-    done;
+    PROJECT_DIR="${DATA_DUMP_DIR}/projects/${PROJECT}/" 
+    # Get project resources
+    oc_get_project_resources
+    # Get project logs
+    oc_get_project_logs  
   done
 }
 
@@ -38,8 +34,51 @@ function oc_get_projects {
   oc get projects -o jsonpath='{.items[*].metadata.name}'
 }
 
+function oc_get_project_attribute {
+  local ATTRIBUTE
+  ATTRIBUTE=$1
+  oc get ${ATTRIBUTE} -n ${PROJECT} -o jsonpath='{.items[*].metadata.name}'
+}
+
+function oc_get_project_resources {
+  local RESOURCE
+  # Get project resource data
+  echo "Retrieving OC resources for project: ${PROJECT}"
+  mkdir -p ${PROJECT_DIR}	
+  for RESOURCE in ${OC_RESOURCES[@]}; do
+    oc get ${RESOURCE} -o json -n ${PROJECT} > "${PROJECT_DIR}/${RESOURCE}.json"
+  done
+}
+
+function oc_get_project_logs {
+  # Local variables
+  local DC_LOG_DIR
+  local POD_LOG_DIR
+  local DC
+  local DCS
+  local POD
+  local PODS
+
+  # Create required log directories
+  DC_LOG_DIR="${PROJECT_DIR}/logs/dc/"
+  POD_LOG_DIR="${PROJECT_DIR}/logs/pods/"
+  mkdir -p ${DC_LOG_DIR} ${POD_LOG_DIR}
+
+  # Gather deployment config logs
+  DCS=$(oc_get_project_attribute dc)
+  for DC in ${DCS}; do
+    oc logs dc/${DC} -n ${PROJECT} --tail=1000 > "${DC_LOG_DIR}/dc_${DC}.log"
+  done
+
+  # Gather pod logs
+  PODS=$(oc_get_project_attribute pods)
+  for POD in ${PODS}; do
+    oc logs ${POD} -n ${PROJECT} --tail=1000 > "${POD_LOG_DIR}/pod_${POD}.log"
+  done
+}
+
 function archive_data {
-  # Generate Archive file of gathered data
+  # Generate archive file of gathered data
   tar -czf ${REPORT_DIR}/report_${DATESTAMP}.tar.gz -C ${DATA_DUMP_DIR} .
   echo ""
   echo "Generated Report: ${REPORT_DIR}/report_${DATESTAMP}.tar.gz"
@@ -55,7 +94,7 @@ function cleanup {
 ###################
 function main {
   trap 'cleanup' 0
-  oc_get_project_resources
+  oc_get_project_data
   archive_data
 }
 
