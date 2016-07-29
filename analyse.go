@@ -1,31 +1,26 @@
 package main
 
 import (
-	"github.com/fheng/fh-system-dump-tool/Check"
 	"fmt"
+	"github.com/fheng/fh-system-dump-tool/Check"
 )
 
-func analyseTask() int {
-	checks := []int{Check.CHECK_IMAGE_PULL_BACK_OFF}
-
-
-
+func analyseTask(checks []int) int {
+	status := 0
 	for _, check := range checks {
 		checker, err := Check.GetCheck(check)
 		if err != nil {
 			fmt.Println(err)
-			return 1
+			status = 1
 		}
 		res, err := checker(*dumpFileLocation)
 		if err != nil {
 			fmt.Println(err)
-			return 1
+			status = 1
 		}
 
 		res.Output()
-
 	}
 
-	return 0
+	return status
 }
-

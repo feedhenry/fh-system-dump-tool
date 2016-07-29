@@ -7,11 +7,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
-	"path/filepath"
 )
-
 
 // A Task performs some part of the RHMAP System Dump Tool.
 type Task func() error
@@ -22,7 +21,6 @@ type errorList []string
 // A projectResourceWriterFactory generates io.Writers for dumping data of a
 // particular resource type within a project.
 type projectResourceWriterCloserFactory func(project, resource string) (io.Writer, io.Closer, error)
-
 
 func (e errorList) Error() string {
 	return "multiple errors:\n" + strings.Join(e, "\n")
@@ -58,7 +56,6 @@ func outToTGZ(extension string, tarFile *Archive) projectResourceWriterCloserFac
 		return writer, writer, nil
 	}
 }
-
 
 func dumpTask() int {
 	archiveFile, err := os.Create(*dumpFileLocation)
