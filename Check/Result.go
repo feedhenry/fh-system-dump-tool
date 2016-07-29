@@ -1,6 +1,6 @@
 package Check
-import "fmt"
 
+import "fmt"
 
 type CheckResult interface {
 	Output()
@@ -22,7 +22,7 @@ func (c *Result) Output() {
 	projectData := map[string]map[string]string{}
 
 	for _, item := range c.Info {
-		if _, ok := projectData[item.Namespace]; ! ok {
+		if _, ok := projectData[item.Namespace]; !ok {
 			projectData[item.Namespace] = map[string]string{}
 		}
 		projectData[item.Namespace][item.ObjectName] = item.Entry
@@ -31,7 +31,8 @@ func (c *Result) Output() {
 	for projectName, project := range projectData {
 		fmt.Println("	Project: " + projectName)
 		for podName, msg := range project {
-			fmt.Println("		Pod (" + podName + "): " + msg)
+			fmt.Println("		Pod: " + podName)
+			fmt.Println("			Msg: " + msg)
 		}
 	}
 }
