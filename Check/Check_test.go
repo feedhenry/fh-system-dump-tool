@@ -12,3 +12,21 @@ func TestAllChecks(t *testing.T) {
 		t.Fatal("first check should be IMAGE_PULL_BACK_OFF")
 	}
 }
+
+
+func TestCheckFactory(t *testing.T) {
+	checker, err := GetCheck(IMAGE_PULL_BACK_OFF)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if checker == nil {
+		t.Fatal("Check function should not be nil")
+	}
+
+	_, err = GetCheck(-1)
+	if err == nil {
+		t.Fatal("Factory should return an error when a bad id is requested")
+	}
+
+}
