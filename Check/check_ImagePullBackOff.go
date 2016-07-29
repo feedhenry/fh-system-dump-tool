@@ -5,11 +5,12 @@ import (
 	"os"
 	"encoding/json"
 	"strings"
+	"fmt"
 )
 
 
 func ImagePullBackOff(logDir string) (CheckResult, error) {
-	result := &Result{Status: 0, CheckName: "ImagePullBackOff"}
+	result := &ImagePullBackOffResult{Status: 0, CheckName: "ImagePullBackOff"}
 	projectDirs, err := ioutil.ReadDir(filepath.Join(logDir, "projects"))
 	if err != nil {
 		return result, err
@@ -37,3 +38,34 @@ func ImagePullBackOff(logDir string) (CheckResult, error) {
 	return result, nil
 }
 
+
+type ImagePullBackOffResult struct {
+	Status    int
+	CheckName string
+	Info      []Info
+}
+
+func (c *ImagePullBackOffResult) Output() {
+	fmt.Println(c.CheckName + " results: ")
+	if c.Status == 0 {
+		fmt.Println("	✔ - Issue not detected.")
+		return
+	}
+
+	projectData := map[string]map[string]string{}
+
+	for _, item := range c.Info {
+		if _, ok := projectData[item.Namespace]; !ok {
+			projectData[item.Namespace] = map[string]string{}
+		}
+		projectData[item.Namespace][item.ObjectName] = item.Entry
+	}
+
+	for projectName, project := range projectData {
+		fmt.Println("	Project: " + projectName)
+		for podName, msg := range project {
+			fmt.Println("		Pod: " + podName)
+			fmt.Println("			Msg: " + msg)
+		}
+	}
+}

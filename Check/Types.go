@@ -9,6 +9,10 @@ type Info struct {
 	Count      int
 }
 
+type CheckResult interface {
+	Output()
+}
+
 type Check func(logDir string) (CheckResult, error)
 
 type Events struct {
