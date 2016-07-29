@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"strconv"
 )
 
 func analyseTask() int {
@@ -76,7 +77,7 @@ func checkForImagePullBackOff(logDir string) error {
 		decoder.Decode(&events)
 		for _, event := range events.Items {
 			if event.Reason == "FailedSync" && strings.Contains(event.Message, "ImagePullBackOff") {
-				fmt.Println(event.InvolvedObject.Name + " in project " + event.InvolvedObject.Namespace + " has failed to pull the image " + string(event.Count) + "times.")
+				fmt.Println(event.InvolvedObject.Name + " in project " + event.InvolvedObject.Namespace + " has failed to pull the image " + strconv.Itoa(event.Count) + "times.")
 				fmt.Println("Original Message: " + event.Message)
 			}
 		}
