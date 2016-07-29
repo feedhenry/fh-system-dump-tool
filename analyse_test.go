@@ -1,7 +1,7 @@
 package main
 import (
 	"testing"
-	"github.com/fheng/fh-system-dump-tool/Check"
+	"github.com/fheng/fh-system-dump-tool/check"
 	"errors"
 )
 
@@ -18,15 +18,15 @@ func TestAllChecksAreExecuted(t *testing.T) {
 	checks := []int{0, 1}
 	r0 := &Result{OutputCalled: false}
 	r1 := &Result{OutputCalled: false}
-	checkFactory := func(id int) (Check.Check, error) {
+	checkFactory := func(id int) (check.Check, error) {
 		switch id {
 		case 0:
-			return func(logDir string) (Check.CheckResult, error) {
+			return func(logDir string) (check.CheckResult, error) {
 				r0.Dir = logDir + "/r0"
 				return r0, nil
 			}, nil
 		case 1:
-			return func(logDir string) (Check.CheckResult, error) {
+			return func(logDir string) (check.CheckResult, error) {
 				r1.Dir = logDir + "/r1"
 				return r1, nil
 			}, nil

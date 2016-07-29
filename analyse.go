@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/fheng/fh-system-dump-tool/Check"
+	"github.com/fheng/fh-system-dump-tool/check"
 )
 
-func analyseTask(logFileDir string, checks []int, checkFactory Check.Factory) int {
+func analyseTask(logFileDir string, checks []int, checkFactory check.Factory) int {
 	status := 0
 	for _, check := range checks {
 		checker, err := checkFactory(check)

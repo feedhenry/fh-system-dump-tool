@@ -4,7 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fheng/fh-system-dump-tool/Check"
+	"github.com/fheng/fh-system-dump-tool/check"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,7 +20,7 @@ const (
 	dumpTimestampFormat = "2006-01-02T15-04-05Z0700"
 )
 
-var checks = Check.AllChecks()
+var checks = check.AllChecks()
 
 var maxParallelTasks = flag.Int("p", runtime.NumCPU(), "max number of tasks to run in parallel")
 var dumpFileLocation = flag.String("f", "", "The location of the dump file")
@@ -47,7 +47,7 @@ func main() {
 	case "dump":
 		os.Exit(dumpTask())
 	case "analyse":
-		os.Exit(analyseTask(*dumpFileLocation, checks, Check.GetCheck))
+		os.Exit(analyseTask(*dumpFileLocation, checks, check.GetCheck))
 	case "help":
 		fallthrough
 	default:

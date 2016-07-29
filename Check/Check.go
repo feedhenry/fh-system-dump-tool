@@ -1,4 +1,4 @@
-package Check
+package check
 import "errors"
 
 const (

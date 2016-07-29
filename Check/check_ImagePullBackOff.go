@@ -1,4 +1,4 @@
-package Check
+package check
 import (
 	"io/ioutil"
 	"path/filepath"
