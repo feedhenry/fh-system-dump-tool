@@ -47,7 +47,7 @@ func main() {
 	case "dump":
 		os.Exit(dumpTask())
 	case "analyse":
-		os.Exit(analyseTask(checks))
+		os.Exit(analyseTask(*dumpFileLocation, checks, Check.GetCheck))
 	case "help":
 		fallthrough
 	default:

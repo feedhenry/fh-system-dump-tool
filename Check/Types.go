@@ -1,6 +1,9 @@
 package Check
 import "time"
 
+
+type Factory func(checkName int) (Check, error)
+
 type Info struct {
 	File       string
 	Entry      string
