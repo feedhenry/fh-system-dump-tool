@@ -35,6 +35,5 @@ func ImagePullBackOff(logDir string) (CheckResult, error) {
 	}
 
 	return result, nil
-
 }
 

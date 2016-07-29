@@ -19,7 +19,16 @@ func (c *Result) Output() {
 		return
 	}
 
+	projectData := map[string]map[string]string{}
+
 	for _, item := range c.Info {
-		fmt.Println("	✘ - " + item.ObjectName + " has ImagePullBackOff issue")
+		projectData[item.Namespace][item.ObjectName] = item.Entry
+	}
+
+	for projectName, project := range projectData {
+		fmt.Println("	Project: " + projectName)
+		for podName, msg := range project {
+			fmt.Println("		Pod (" + podName + "): " + msg)
+		}
 	}
 }
