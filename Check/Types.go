@@ -9,7 +9,7 @@ type Info struct {
 	Count      int
 }
 
-type Check func(logDir string) (*Result, error)
+type Check func(logDir string) (CheckResult, error)
 
 type Events struct {
 	Kind       string `json:"kind"`

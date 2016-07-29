@@ -8,7 +8,7 @@ import (
 )
 
 
-func ImagePullBackOff(logDir string) (*Result, error) {
+func ImagePullBackOff(logDir string) (CheckResult, error) {
 	result := &Result{Status: 0, CheckName: "ImagePullBackOff"}
 	projectDirs, err := ioutil.ReadDir(filepath.Join(logDir, "projects"))
 	if err != nil {

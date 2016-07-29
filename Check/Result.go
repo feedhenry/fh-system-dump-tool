@@ -2,6 +2,10 @@ package Check
 import "fmt"
 
 
+type CheckResult interface {
+	Output()
+}
+
 type Result struct {
 	Status    int
 	CheckName string
