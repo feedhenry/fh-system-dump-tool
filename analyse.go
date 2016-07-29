@@ -8,6 +8,8 @@ import (
 func analyseTask() int {
 	checks := []int{Check.CHECK_IMAGE_PULL_BACK_OFF}
 
+
+
 	for _, check := range checks {
 		checker, err := Check.GetCheck(check)
 		if err != nil {

@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"io"
 	"time"
+	"os"
 )
 
 type Archive struct {
@@ -69,4 +70,14 @@ func (a *Archive) AddFileByContent(src []byte, dest string) error {
 func (a *Archive) Close() {
 	a.tarWriter.Close()
 	a.gzWriter.Close()
+}
+
+func (a *Archive) Extract(dest string) error {
+	err  := os.MkdirAll(dest, 0755)
+	if err != nil {
+		return err
+	}
+
+
+
 }
