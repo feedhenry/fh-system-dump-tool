@@ -1,0 +1,15 @@
+The Red Hat Mobile Application Platform Dump and Analysis Tool
+==============================================================
+
+This tool is used to take a dump of the current state of the 
+Red Hat Mobile Application Platform along with all relevant
+log files and create a tar.gz file which contains all of this 
+data.
+
+This tool is also able to read a tar.gz file created in that
+way and scan for common issues and alert the user to potential
+issues that may currently be affecting the platform.
+
+# Dump Task
+===========
+The dump task will take a 
