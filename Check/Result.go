@@ -22,6 +22,9 @@ func (c *Result) Output() {
 	projectData := map[string]map[string]string{}
 
 	for _, item := range c.Info {
+		if _, ok := projectData[item.Namespace]; ! ok {
+			projectData[item.Namespace] = map[string]string{}
+		}
 		projectData[item.Namespace][item.ObjectName] = item.Entry
 	}
 
