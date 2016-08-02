@@ -28,7 +28,6 @@ func TestGetProjects(t *testing.T) {
 	}
 }
 
-
 func TestGetSpaceSeparated(t *testing.T) {
 	tests := []struct {
 		projects []string

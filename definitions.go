@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os/exec"
-	"io"
 	"bytes"
 	"fmt"
+	"io"
+	"os/exec"
 	"strings"
 )
 

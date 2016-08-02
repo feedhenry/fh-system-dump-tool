@@ -1,6 +1,6 @@
 package check
-import "testing"
 
+import "testing"
 
 func TestAllChecks(t *testing.T) {
 	checks := AllChecks()
@@ -13,20 +13,18 @@ func TestAllChecks(t *testing.T) {
 	}
 }
 
-
 func TestCheckFactory(t *testing.T) {
+	_, err := GetCheck(-1)
+	if err == nil {
+		t.Fatal("Factory should return an error when a bad id is requested")
+	}
+
 	checker, err := GetCheck(IMAGE_PULL_BACK_OFF)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if checker == nil {
-		t.Fatal("Check function should not be nil")
+		t.Fatal("Check should not be nil")
 	}
-
-	_, err = GetCheck(-1)
-	if err == nil {
-		t.Fatal("Factory should return an error when a bad id is requested")
-	}
-
 }

@@ -20,7 +20,6 @@ func (e errorList) Error() string {
 	return "multiple errors:\n" + strings.Join(e, "\n")
 }
 
-
 // getSpaceSeparated calls cmd, expected to output a space-separated list of
 // words to stdout, and returns the words.
 func getSpaceSeparated(cmd *exec.Cmd) ([]string, error) {
@@ -48,18 +47,16 @@ func getSpaceSeparated(cmd *exec.Cmd) ([]string, error) {
 	return projects, nil
 }
 
-func dumpTask() int {
+func dumpTask() error {
 	archiveFile, err := os.Create(*dumpFileLocation)
 	if err != nil {
-		printError(err)
-		return 1
+		return err
 	}
 	defer archiveFile.Close()
 
 	tarFile, err := NewTgz(archiveFile)
 	if err != nil {
-		printError(err)
-		return 1
+		return err
 	}
 	defer tarFile.Close()
 
@@ -70,8 +67,7 @@ func dumpTask() int {
 	// Add tasks to fetch resource definitions.
 	projects, err := GetProjects()
 	if err != nil {
-		printError(err)
-		return 1
+		return err
 	}
 
 	for _, p := range projects {
@@ -91,7 +87,7 @@ func dumpTask() int {
 			task()
 			fmt.Print(".")
 		}
-		return 0
+		return nil
 	}
 	// Run at most N tasks in parallel, and wait for all of them to
 	// complete.
@@ -110,7 +106,7 @@ func dumpTask() int {
 	}
 	wg.Wait()
 
-	return 0
+	return nil
 }
 
 // GetProjects returns a list of project names visible by the current logged in

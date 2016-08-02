@@ -1,59 +1,84 @@
 package main
+
 import (
-	"testing"
-	"github.com/fheng/fh-system-dump-tool/check"
 	"errors"
+	"github.com/fheng/fh-system-dump-tool/check"
+	"io"
+	"strconv"
+	"testing"
 )
 
-type Result struct {
-	OutputCalled bool
-	Dir string
+type mockCheck struct {
+	Result *check.Result
+	Files  []string
 }
 
-func (r *Result) Output() {
-	r.OutputCalled = true
+func (m *mockCheck) ExamineFile(reader io.Reader) error {
+	return nil
 }
 
-func TestAllChecksAreExecuted(t *testing.T) {
+func (m *mockCheck) RequiredFiles() []string {
+	return m.Files
+}
+
+func (m *mockCheck) GetResult() *check.Result {
+	return m.Result
+}
+
+func checkFactory(id int) (check.Check, error) {
+	result := &check.Result{StatusMessage: "no issues", Status: id, CheckName: "test check " + strconv.Itoa(id)}
+	switch id {
+	case 0, 1:
+		return &mockCheck{Result: result}, nil
+	default:
+		return nil, errors.New("Invalid check specified")
+	}
+}
+
+func TestAllChecksReturnCorrectly(t *testing.T) {
 	checks := []int{0, 1}
-	r0 := &Result{OutputCalled: false}
-	r1 := &Result{OutputCalled: false}
-	checkFactory := func(id int) (check.Check, error) {
-		switch id {
-		case 0:
-			return func(logDir string) (check.CheckResult, error) {
-				r0.Dir = logDir + "/r0"
-				return r0, nil
-			}, nil
-		case 1:
-			return func(logDir string) (check.CheckResult, error) {
-				r1.Dir = logDir + "/r1"
-				return r1, nil
-			}, nil
-		default:
-			return nil, errors.New("Could not find id to load")
-		}
+
+	results, err := analyseTask([]string{}, checks, checkFactory)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	ret := analyseTask("foo/bar", checks, checkFactory)
-
-	if ret != 0 {
-		t.Fatal("return value was non-zero")
+	r0 := results["results"][0]
+	r1 := results["results"][1]
+	if r0.CheckName != "test check 0" {
+		t.Fatal("First test name not returned correctly")
+	}
+	if r0.Status != 0 {
+		t.Fatal("First status not return correctly")
 	}
 
-	if r0.OutputCalled != true {
-		t.Fatal("result output was not called but should have been")
+	if r1.CheckName != "test check 1" {
+		t.Fatal("Second test name not returned correctly")
 	}
-	if r1.OutputCalled != true {
-		t.Fatal("result output was not called but should have been")
+	if r1.Status != 1 {
+		t.Fatal("Second status not return correctly")
+	}
+}
+
+func TestMatchingFiles(t *testing.T) {
+	check := &mockCheck{Files: []string{"test1.json", "test.txt"}}
+	files := []string{"/path/to/test1.json", "test.txt", "/bad/file/test1.json.txt", "/path/to/test.txt"}
+	ret, err := getFilesFor(check, files)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	if r0.Dir != "foo/bar/r0" {
-		t.Fatal("Check was not passed the correct logDir value got: " + r0.Dir + ", expected: foo/bar/r0")
+	if ret[0] != "/path/to/test1.json" {
+		t.Fatal("missing expected file: /path/to/test1.json")
 	}
 
-	if r1.Dir != "foo/bar/r1" {
-		t.Fatal("Check was not passed the correct logDir value got: " + r1.Dir + ", expected: foo/bar/r1")
+	if ret[1] != "test.txt" {
+		t.Fatal("missing expected file: test.txt")
+	}
+
+	if ret[2] != "/path/to/test.txt" {
+		t.Fatal("missing expected file: /path/to/test.txt")
 	}
 
 }
