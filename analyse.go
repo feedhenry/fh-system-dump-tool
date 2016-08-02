@@ -35,7 +35,7 @@ func outputResults(results map[string][]*check.Result, format string, pretty boo
  execute the checks on any relevant files in the list of files and return a map of results or else an error
 */
 func analyseTask(files []string, checks []int, checkFactory check.Factory) (map[string][]*check.Result, error) {
-	results := map[string][]*check.Result{"results": []*check.Result{}}
+	results := map[string][]*check.Result{"results": {}}
 	for _, check := range checks {
 		checker, err := checkFactory(check)
 		if err != nil {

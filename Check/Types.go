@@ -30,11 +30,11 @@ type Check interface {
 type Events struct {
 	Items []struct {
 		InvolvedObject struct {
-			Namespace       string `json:"namespace"`
-			Name            string `json:"name"`
+			Namespace string `json:"namespace"`
+			Name      string `json:"name"`
 		} `json:"involvedObject"`
 		Reason  string `json:"reason"`
 		Message string `json:"message"`
-		Count          int       `json:"count"`
+		Count   int    `json:"count"`
 	} `json:"items"`
 }
