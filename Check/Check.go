@@ -12,7 +12,7 @@ func AllChecks() []int {
 func GetCheck(checkName int) (Check, error) {
 	switch checkName {
 	case IMAGE_PULL_BACK_OFF:
-		return ImagePullBackOff, nil
+		return &ImagePullBackOff{}, nil
 	default:
 		return nil, errors.New("Could not find requested check")
 	}

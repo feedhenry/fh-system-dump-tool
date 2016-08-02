@@ -1,27 +1,23 @@
 package check
 import (
-	"io/ioutil"
-	"path/filepath"
-	"os"
 	"encoding/json"
 	"strings"
 	"fmt"
+	"io"
 )
 
+type ImagePullBackOff struct {
 
-func ImagePullBackOff(logDir string) (CheckResult, error) {
+}
+
+func (c *ImagePullBackOff) RequiredFiles() []string {
+	return []string{"events.json"}
+}
+
+func (c *ImagePullBackOff) Execute(files []io.Reader) (CheckResult, error) {
 	result := &ImagePullBackOffResult{Status: 0, CheckName: "ImagePullBackOff"}
-	projectDirs, err := ioutil.ReadDir(filepath.Join(logDir, "projects"))
-	if err != nil {
-		return result, err
-	}
 
-	for _, projectDir := range projectDirs {
-		reader, err := os.Open(filepath.Join(logDir, "projects", projectDir.Name(), "events.json"))
-		if err != nil {
-			return result, err
-		}
-
+	for _, reader := range files {
 		events := Events{}
 		decoder := json.NewDecoder(reader)
 		decoder.Decode(&events)

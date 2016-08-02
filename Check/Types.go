@@ -1,5 +1,8 @@
 package check
-import "time"
+import (
+	"time"
+	"io"
+)
 
 
 type Factory func(checkName int) (Check, error)
@@ -16,7 +19,10 @@ type CheckResult interface {
 	Output()
 }
 
-type Check func(logDir string) (CheckResult, error)
+type Check interface {
+	Execute(files []io.Reader) (CheckResult, error)
+	RequiredFiles() []string
+}
 
 type Events struct {
 	Kind       string `json:"kind"`
