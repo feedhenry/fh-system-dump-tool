@@ -32,40 +32,15 @@ func TestDiscoversIssue(t *testing.T) {
 
 	reader := bytes.NewReader([]byte(`
 	{
-		"kind": "List",
-		"apiVersion": "v1",
-		"metadata": {},
 		"items": [
 			{
-				"kind": "Event",
-				"apiVersion": "v1",
-				"metadata": {
-					"name": "fh-aaa-4-0w1q2.14656378b8b4a890",
-					"namespace": "phils-core",
-					"selfLink": "/api/v1/namespaces/phils-core/events/fh-aaa-4-0w1q2.14656378b8b4a890",
-					"uid": "488dcbb8-5493-11e6-b504-0800275732c8",
-					"resourceVersion": "47238",
-					"creationTimestamp": "2016-07-28T07:17:03Z",
-					"deletionTimestamp": "2016-07-28T09:28:37Z"
-				},
 				"involvedObject": {
-					"kind": "Pod",
 					"namespace": "phils-core",
-					"name": "fh-aaa-4-0w1q2",
-					"uid": "4539b140-5493-11e6-b504-0800275732c8",
-					"apiVersion": "v1",
-					"resourceVersion": "46966"
+					"name": "fh-aaa-4-0w1q2"
 				},
 				"reason": "FailedSync",
 				"message": "Error syncing pod, skipping: failed to \"StartContainer\" for \"fh-aaa\" with ImagePullBackOff: \"Back-off pulling image \\\"docker.io/rhmap/fh-aaa:0.3.0-349-234\\\"\"\n",
-				"source": {
-					"component": "kubelet",
-					"host": "local.feedhenry.io"
-				},
-				"firstTimestamp": "2016-07-28T07:17:03Z",
-				"lastTimestamp": "2016-07-28T07:28:37Z",
-				"count": 47,
-				"type": "Warning"
+				"count": 47
 			}
 		]
 	}
@@ -88,39 +63,15 @@ func TestPassesIssues(t *testing.T) {
 
 	reader := bytes.NewReader([]byte(`
 	{
-		"kind": "List",
-		"apiVersion": "v1",
-		"metadata": {},
 		"items": [
 			{
-				"kind": "Event",
-				"apiVersion": "v1",
-				"metadata": {
-					"name": "fh-aaa.1465641d2031006e",
-					"namespace": "phils-core",
-					"selfLink": "/api/v1/namespaces/phils-core/events/fh-aaa.1465641d2031006e",
-					"uid": "ed6dc031-5494-11e6-b504-0800275732c8",
-					"resourceVersion": "47242",
-					"creationTimestamp": "2016-07-28T07:28:49Z",
-					"deletionTimestamp": "2016-07-28T09:28:49Z"
-				},
 				"involvedObject": {
-					"kind": "DeploymentConfig",
 					"namespace": "phils-core",
-					"name": "fh-aaa",
-					"uid": "772cbd90-524f-11e6-b504-0800275732c8",
-					"apiVersion": "v1",
-					"resourceVersion": "46946"
+					"name": "fh-aaa"
 				},
 				"reason": "DeploymentScaled",
 				"message": "Scaled deployment \"fh-aaa-4\" from 1 to 0",
-				"source": {
-					"component": "deploymentconfig-controller"
-				},
-				"firstTimestamp": "2016-07-28T07:28:49Z",
-				"lastTimestamp": "2016-07-28T07:28:49Z",
-				"count": 1,
-				"type": "Normal"
+				"count": 1
 			}
 		]
 	}
