@@ -87,6 +87,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Print(string(help))
+		fmt.Println(string(help))
 	}
 }
