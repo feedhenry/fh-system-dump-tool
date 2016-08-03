@@ -22,8 +22,6 @@ const (
 	dumpTimestampFormat = "2006-01-02T15-04-05Z0700"
 )
 
-var checks = check.AllChecks()
-
 var maxParallelTasks = flag.Int("p", runtime.NumCPU(), "max number of tasks to run in parallel")
 var dumpFileLocation = flag.String("f", "", "The location of the dump file")
 var outputFormat = flag.String("o", "json", "The format to output analysis results in, only JSON currently supported")
@@ -61,32 +59,18 @@ func main() {
 			os.Exit(1)
 		}
 	case "analyse":
-
-		//todo: extract tar file into a dump directory
-
-		files, err := listAllFiles(*dumpFileLocation)
+		files, err := listAllFiles("./rhmap-dumps/dump")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		results, err := analyseTask(files, checks, check.GetCheck)
+		results, err := analyseTask(files, check.AllChecks(), check.GetCheck)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		outputResults(results, outputFormatString, *prettyOutputFormat)
-
-	case "help":
-		fallthrough
-	default:
-		help, err := ioutil.ReadFile("./help.txt")
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		fmt.Println(string(help))
 	}
 }

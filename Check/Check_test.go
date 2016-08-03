@@ -5,7 +5,7 @@ import "testing"
 func TestAllChecks(t *testing.T) {
 	checks := AllChecks()
 	if len(checks) < 1 {
-		t.Fatal("Count of all checks should be 1 or more in length")
+		t.Fatal("count of all checks should be 1 or more in length")
 	}
 
 	if checks[0] != IMAGE_PULL_BACK_OFF {
@@ -16,7 +16,7 @@ func TestAllChecks(t *testing.T) {
 func TestCheckFactory(t *testing.T) {
 	_, err := GetCheck(-1)
 	if err == nil {
-		t.Fatal("Factory should return an error when a bad id is requested")
+		t.Fatal("factory should return an error when a bad id is requested")
 	}
 
 	checker, err := GetCheck(IMAGE_PULL_BACK_OFF)
@@ -25,6 +25,6 @@ func TestCheckFactory(t *testing.T) {
 	}
 
 	if checker == nil {
-		t.Fatal("Check should not be nil")
+		t.Fatal("check should not be nil")
 	}
 }

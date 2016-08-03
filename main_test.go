@@ -32,7 +32,7 @@ func TestHelperProcess(t *testing.T) {
 		args = args[1:]
 	}
 	if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "No command\n")
+		fmt.Fprintf(os.Stderr, "no command\n")
 		os.Exit(2)
 	}
 
@@ -45,7 +45,7 @@ func TestHelperProcess(t *testing.T) {
 		}
 		fmt.Println(iargs...)
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command %q\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command %q\n", cmd)
 		os.Exit(2)
 	}
 }

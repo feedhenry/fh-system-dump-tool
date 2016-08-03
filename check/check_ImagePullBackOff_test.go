@@ -10,7 +10,7 @@ func TestNewImagePullBackOff(t *testing.T) {
 	if check.GetResult().CheckName != "ImagePullBackOff" ||
 		check.GetResult().Status != 0 ||
 		check.GetResult().StatusMessage != "This issue has not been detected" {
-		t.Fatal("Check was not constructed correctly")
+		t.Fatal("check was not constructed correctly")
 	}
 }
 
@@ -51,10 +51,10 @@ func TestDiscoversIssue(t *testing.T) {
 	}
 
 	if check.GetResult().Status != 1 {
-		t.Fatalf("Check should have set error status, expected 1, got: %v", check.GetResult().Status)
+		t.Fatalf("check should have set error status, expected 1, got: %v", check.GetResult().Status)
 	}
 	if check.GetResult().Info[0].Count != 47 {
-		t.Fatalf("Check should have set count, expected 47, got: %v", check.GetResult().Status)
+		t.Fatalf("check should have set count, expected 47, got: %v", check.GetResult().Status)
 	}
 }
 
@@ -82,7 +82,7 @@ func TestPassesIssues(t *testing.T) {
 	}
 
 	if check.GetResult().Status != 0 {
-		t.Fatalf("Check should have set success status, expected 0, got: %v", check.GetResult().Status)
+		t.Fatalf("check should have set success status, expected 0, got: %v", check.GetResult().Status)
 	}
 }
 
@@ -92,6 +92,6 @@ func TestBadJsonIssues(t *testing.T) {
 	reader := bytes.NewReader([]byte("{]"))
 	err := check.ExamineFile(reader)
 	if err == nil {
-		t.Fatal("Bad JSON should have an error")
+		t.Fatal("bad JSON should have an error")
 	}
 }

@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"io"
 )
 
-/*
- outputResults will take the results returned from analyseTask and output them honouring the format and pretty strings.
- Current valid format is only JSON
-*/
+
+// outputResults will take the results returned from analyseTask and output them
+// honouring the format and pretty strings. Current valid format is only JSON
 func outputResults(results map[string][]*check.Result, format string, pretty bool) error {
 	var output []byte
 	var err error
@@ -30,30 +30,16 @@ func outputResults(results map[string][]*check.Result, format string, pretty boo
 	return nil
 }
 
-/*
- The analyse task takes an array of files names, an array of check IDs and a factory to build checks from. It will
- execute the checks on any relevant files in the list of files and return a map of results or else an error
-*/
-func analyseTask(files []string, checks []int, checkFactory check.Factory) (map[string][]*check.Result, error) {
+// The analyse task takes an array of files names, an array of check IDs and a
+// factory to build checks from. It will execute the checks on any relevant
+// files in the list of files and return a map of results or else an error
+func analyseTask(files []string, checks []check.CheckTask, checkFactory check.Factory) (map[string][]*check.Result, error) {
+	fileFactory := getFilesFactory(files)
+
 	results := map[string][]*check.Result{"results": {}}
+
 	for _, check := range checks {
-		checker, err := checkFactory(check)
-		if err != nil {
-			return nil, err
-		}
-
-		checkFiles, err := getFilesFor(checker, files)
-		if err != nil {
-			return nil, err
-		}
-		for _, file := range checkFiles {
-			reader, err := os.Open(file)
-			if err != nil {
-				return nil, err
-			}
-			defer reader.Close()
-
-			err = checker.ExamineFile(reader)
+			res = check(fileFactory)
 			if err != nil {
 				return nil, err
 			}
@@ -64,31 +50,26 @@ func analyseTask(files []string, checks []int, checkFactory check.Factory) (map[
 	return results, nil
 }
 
-/*
-  getFilesFor takes a check with a RequiredFiles method and an array of file names and returns the paths of any files
-  which match the checks RequiredFiles.
-*/
-func getFilesFor(checker check.Check, files []string) ([]string, error) {
-
-	requiredFiles := checker.RequiredFiles()
-
-	retFiles := []string{}
-
-	for _, rFile := range requiredFiles {
-		for _, file := range files {
-			if strings.HasSuffix(file, rFile) {
-				retFiles = append(retFiles, file)
+// getFilesFor takes a check with a RequiredFiles method and an array of file
+// names and returns the paths of any files which match the checks
+// RequiredFiles.
+func getFilesFactory(files []string) check.CheckFileFactory {
+	return func(requiredFiles []string) []io.Reader {
+		retFiles := []io.Reader{}
+		for _, rFile := range requiredFiles {
+			for _, file := range files {
+				if strings.HasSuffix(file, rFile) {
+					retFiles = append(retFiles, file)
+				}
 			}
 		}
+		return retFiles
 	}
-
-	return retFiles, nil
 }
 
-/*
- This function recursively lists the relative path of all files in the provided directory and all sub-directories,
- returned as an array of strings
-*/
+// This function recursively lists the relative path of all files in the
+// provided directory and all sub-directories, returned as an array of
+// strings
 func listAllFiles(dir string) ([]string, error) {
 	files := []string{}
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {

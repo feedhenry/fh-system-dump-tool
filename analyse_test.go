@@ -31,7 +31,7 @@ func checkFactory(id int) (check.Check, error) {
 	case 0, 1:
 		return &mockCheck{Result: result}, nil
 	default:
-		return nil, errors.New("Invalid check specified")
+		return nil, errors.New("invalid check specified")
 	}
 }
 
@@ -47,17 +47,17 @@ func TestAllChecksReturnCorrectly(t *testing.T) {
 	r0 := results["results"][0]
 	r1 := results["results"][1]
 	if r0.CheckName != "test check 0" {
-		t.Fatal("First test name not returned correctly")
+		t.Fatal("first test name not returned correctly")
 	}
 	if r0.Status != 0 {
-		t.Fatal("First status not return correctly")
+		t.Fatal("first status not return correctly")
 	}
 
 	if r1.CheckName != "test check 1" {
-		t.Fatal("Second test name not returned correctly")
+		t.Fatal("second test name not returned correctly")
 	}
 	if r1.Status != 1 {
-		t.Fatal("Second status not return correctly")
+		t.Fatal("second status not return correctly")
 	}
 }
 

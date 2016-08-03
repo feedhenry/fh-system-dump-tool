@@ -6,41 +6,29 @@ import (
 	"strings"
 )
 
-type ImagePullBackOff struct {
-	Result *Result
-}
+func CheckForImagePullBackOff(fileFactory CheckFileFactory) Result {
+	files := fileFactory([]string{"events.json"})
 
-func NewImagePullBackOff() Check {
-	c := &ImagePullBackOff{}
-	c.Result = &Result{Status: 0, CheckName: "ImagePullBackOff", StatusMessage: "This issue has not been detected"}
-	return c
-}
+	res := Result{Status: 0, CheckName: "ImagePullBackOff", StatusMessage: "This issue has not been detected"}
 
-func (c *ImagePullBackOff) GetResult() *Result {
-	return c.Result
-}
+	for _, reader := range files {
+		events := Events{}
+		decoder := json.NewDecoder(reader)
+		err := decoder.Decode(&events)
+		if err != nil {
+			return err
+		}
 
-func (c *ImagePullBackOff) RequiredFiles() []string {
-	return []string{"events.json"}
-}
 
-func (c *ImagePullBackOff) ExamineFile(reader io.Reader) error {
-
-	events := Events{}
-	decoder := json.NewDecoder(reader)
-	err := decoder.Decode(&events)
-	if err != nil {
-		return err
-	}
-
-	for _, event := range events.Items {
-		if event.Reason == "FailedSync" && strings.Contains(event.Message, "ImagePullBackOff") {
-			info := Info{ObjectName: event.InvolvedObject.Name, Namespace: event.InvolvedObject.Namespace, Count: event.Count, Entry: event.Message}
-			c.Result.Status = 1
-			c.Result.StatusMessage = "This issue may be present in the system"
-			c.Result.Info = append(c.Result.Info, info)
+		for _, event := range events.Items {
+			if event.Reason == "FailedSync" && strings.Contains(event.Message, "ImagePullBackOff") {
+				info := Info{ObjectName: event.InvolvedObject.Name, Namespace: event.InvolvedObject.Namespace, Count: event.Count, Entry: event.Message}
+				res.Status = 1
+				res.StatusMessage = "This issue may be present in the system"
+				res.Info = append(res.Info, info)
+			}
 		}
 	}
 
-	return nil
+	return res
 }

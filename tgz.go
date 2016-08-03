@@ -6,10 +6,14 @@ import (
 	"compress/gzip"
 	"io"
 	"time"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"fmt"
 )
 
 type Archive struct {
-	tgzFile   io.Writer
+	tgzFile   io.ReadWriter
 	tarWriter *tar.Writer
 	gzWriter  *gzip.Writer
 }
@@ -28,7 +32,7 @@ func (a *ArchiveWriter) Close() error {
 	return a.Archive.AddFileByContent(a.Writer.Bytes(), a.File)
 }
 
-func NewTgz(file io.Writer) (*Archive, error) {
+func NewTgz(file io.ReadWriter) (*Archive, error) {
 	tgz := Archive{}
 	var err error
 	tgz.tgzFile = file
@@ -69,4 +73,39 @@ func (a *Archive) AddFileByContent(src []byte, dest string) error {
 func (a *Archive) Close() {
 	a.tarWriter.Close()
 	a.gzWriter.Close()
+}
+
+func (a *Archive) extract(destination string) error {
+
+	gzf, err := gzip.NewReader(a.tgzFile)
+	if err != nil {
+		return err
+	}
+
+	tarReader := tar.NewReader(gzf)
+
+	for {
+		header, err := tarReader.Next()
+
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			fmt.Println("error: ", err)
+			return err
+		}
+
+		switch int(header.Typeflag) {
+		case int(int(tar.TypeReg) - '0'):
+			err := os.MkdirAll(filepath.Join(destination, filepath.Dir(header.Name)), 0777)
+			if err != nil {
+				return err
+			}
+			b := []byte{}
+			tarReader.Read(b)
+			ioutil.WriteFile(filepath.Join(destination, header.Name), b, 0777)
+		}
+	}
+	return nil
 }
