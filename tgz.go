@@ -4,14 +4,18 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"io"
+	"strings"
 	"time"
 )
 
 type Archive struct {
-	tgzFile   io.Writer
-	tarWriter *tar.Writer
-	gzWriter  *gzip.Writer
+	tgzFile    io.Writer
+	tarWriter  *tar.Writer
+	gzWriter   *gzip.Writer
+	WriteQueue chan ArchiveWriteTask
+	Finished   chan bool
 }
 
 type ArchiveWriter struct {
@@ -20,12 +24,24 @@ type ArchiveWriter struct {
 	Writer  *bytes.Buffer
 }
 
+type ArchiveWriteTask struct {
+	File    string
+	Content []byte
+}
+
 func (a *ArchiveWriter) Write(p []byte) (n int, err error) {
 	return a.Writer.Write(p)
 }
 
 func (a *ArchiveWriter) Close() error {
-	return a.Archive.AddFileByContent(a.Writer.Bytes(), a.File)
+	if "" == strings.TrimSpace(a.File) {
+		return errors.New("File name cannot be empty")
+	}
+	// create a write task from the data in this file
+	writeTask := ArchiveWriteTask{File: strings.Trim(a.File, " "), Content: a.Writer.Bytes()}
+	// and queue it in the archive write queue
+	a.Archive.WriteQueue <- writeTask
+	return nil
 }
 
 func NewTgz(file io.Writer) (*Archive, error) {
@@ -38,8 +54,24 @@ func NewTgz(file io.Writer) (*Archive, error) {
 
 	tgz.gzWriter = gzip.NewWriter(tgz.tgzFile)
 	tgz.tarWriter = tar.NewWriter(tgz.gzWriter)
+	tgz.WriteQueue = make(chan ArchiveWriteTask)
+	tgz.Finished = make(chan bool)
+
+	go tgz.listenForWrites()
 
 	return &tgz, nil
+
+}
+
+func (a *Archive) listenForWrites() {
+	for {
+		task, openChannel := <-a.WriteQueue
+		a.AddFileByContent(task.Content, task.File)
+		if !openChannel {
+			a.Finished <- true
+			return
+		}
+	}
 }
 
 func (a *Archive) GetWriterToFile(file string) io.WriteCloser {
@@ -55,6 +87,10 @@ func (a *Archive) AddFileByContent(src []byte, dest string) error {
 		ModTime: time.Now(),
 	}
 
+	if "" == strings.TrimSpace(dest) {
+		return errors.New("Cannot add file with no name")
+	}
+
 	if err := a.tarWriter.WriteHeader(header); err != nil {
 		return err
 	}
@@ -67,6 +103,10 @@ func (a *Archive) AddFileByContent(src []byte, dest string) error {
 }
 
 func (a *Archive) Close() {
+	close(a.WriteQueue)
+
+	<-a.Finished
+	close(a.Finished)
 	a.tarWriter.Close()
 	a.gzWriter.Close()
 }
