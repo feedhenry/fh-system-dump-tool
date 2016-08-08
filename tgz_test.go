@@ -36,6 +36,26 @@ func TestWritingAFile(t *testing.T) {
 	}
 }
 
+func TestWritingToEmptyFileName(t *testing.T) {
+	b := bytes.Buffer{}
+	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
+	defer tgzFile.Flush()
+
+	tgz, err := NewTgz(tgzFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tgz.Close()
+
+	writer := tgz.GetWriterToFile("")
+	writer.Write([]byte("test"))
+	err = writer.Close()
+	if err == nil {
+		t.Fatal("There should be an error when the filename is empty")
+	}
+
+}
+
 func TestWritingTwoFiles(t *testing.T) {
 	b := bytes.Buffer{}
 	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
@@ -113,12 +133,12 @@ func TestParallelWrites(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	numSyncWrites := 10000
+	numSyncWrites := 25000
 
 	tasks := []task{}
 
 	for i := 1; i <= numSyncWrites; i++ {
-		tasks = append(tasks, getWriteTask(tgz.GetWriterToFile("file"+strconv.Itoa(i)+".file")))
+		tasks = append(tasks, getWriteTask(tgz.GetWriterToFile("path/to/file"+strconv.Itoa(i)+".file")))
 	}
 
 	var wg sync.WaitGroup
@@ -143,12 +163,12 @@ func TestParallelWrites(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, ok := files["file1.file"]; !ok {
-		t.Fatal("Expected tgz to contain file1.file but it didnt")
+	if _, ok := files["path/to/file1.file"]; !ok {
+		t.Fatal("Expected tgz to contain path/to/file1.file but it didnt")
 	}
 
-	if _, ok := files["file"+strconv.Itoa(numSyncWrites)+".file"]; !ok {
-		t.Fatal("Expected tgz to contain file" + strconv.Itoa(numSyncWrites) + ".file but it didnt")
+	if _, ok := files["path/to/file"+strconv.Itoa(numSyncWrites)+".file"]; !ok {
+		t.Fatal("Expected tgz to contain path/to/file" + strconv.Itoa(numSyncWrites) + ".file but it didnt")
 	}
 
 }
