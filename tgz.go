@@ -4,9 +4,9 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"errors"
+	"fmt"
 	"io"
-	"strings"
+	"math/rand"
 	"time"
 )
 
@@ -15,7 +15,7 @@ type Archive struct {
 	tarWriter  *tar.Writer
 	gzWriter   *gzip.Writer
 	WriteQueue chan ArchiveWriteTask
-	Finished   chan bool
+	finished   chan struct{}
 }
 
 type ArchiveWriter struct {
@@ -25,7 +25,7 @@ type ArchiveWriter struct {
 }
 
 type ArchiveWriteTask struct {
-	File    string
+	Name    string
 	Content []byte
 }
 
@@ -34,11 +34,8 @@ func (a *ArchiveWriter) Write(p []byte) (n int, err error) {
 }
 
 func (a *ArchiveWriter) Close() error {
-	if "" == strings.TrimSpace(a.File) {
-		return errors.New("File name cannot be empty")
-	}
 	// create a write task from the data in this file
-	writeTask := ArchiveWriteTask{File: strings.Trim(a.File, " "), Content: a.Writer.Bytes()}
+	writeTask := ArchiveWriteTask{Name: a.File, Content: a.Writer.Bytes()}
 	// and queue it in the archive write queue
 	a.Archive.WriteQueue <- writeTask
 	return nil
@@ -55,7 +52,7 @@ func NewTgz(file io.Writer) (*Archive, error) {
 	tgz.gzWriter = gzip.NewWriter(tgz.tgzFile)
 	tgz.tarWriter = tar.NewWriter(tgz.gzWriter)
 	tgz.WriteQueue = make(chan ArchiveWriteTask)
-	tgz.Finished = make(chan bool)
+	tgz.finished = make(chan struct{})
 
 	go tgz.listenForWrites()
 
@@ -64,14 +61,10 @@ func NewTgz(file io.Writer) (*Archive, error) {
 }
 
 func (a *Archive) listenForWrites() {
-	for {
-		task, openChannel := <-a.WriteQueue
-		a.AddFileByContent(task.Content, task.File)
-		if !openChannel {
-			a.Finished <- true
-			return
-		}
+	for task := range a.WriteQueue {
+		a.AddFileByContent(task.Content, task.Name)
 	}
+	a.finished <- struct{}{}
 }
 
 func (a *Archive) GetWriterToFile(file string) io.WriteCloser {
@@ -80,15 +73,15 @@ func (a *Archive) GetWriterToFile(file string) io.WriteCloser {
 }
 
 func (a *Archive) AddFileByContent(src []byte, dest string) error {
+	if dest == "" {
+		dest = fmt.Sprintf("untitled_%08x", rand.Uint32())
+	}
+
 	header := &tar.Header{
 		Name:    dest,
 		Size:    int64(len(src)),
 		Mode:    0775,
 		ModTime: time.Now(),
-	}
-
-	if "" == strings.TrimSpace(dest) {
-		return errors.New("Cannot add file with no name")
 	}
 
 	if err := a.tarWriter.WriteHeader(header); err != nil {
@@ -105,8 +98,8 @@ func (a *Archive) AddFileByContent(src []byte, dest string) error {
 func (a *Archive) Close() {
 	close(a.WriteQueue)
 
-	<-a.Finished
-	close(a.Finished)
+	<-a.finished
+	close(a.finished)
 	a.tarWriter.Close()
 	a.gzWriter.Close()
 }

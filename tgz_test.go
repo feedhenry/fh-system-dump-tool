@@ -2,10 +2,11 @@ package main
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"compress/gzip"
 	"io"
+	"math/rand"
+	"reflect"
 	"strconv"
 	"sync"
 	"testing"
@@ -13,9 +14,8 @@ import (
 
 func TestWritingAFile(t *testing.T) {
 	b := bytes.Buffer{}
-	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
 
-	tgz, err := NewTgz(tgzFile)
+	tgz, err := NewTgz(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,9 +24,8 @@ func TestWritingAFile(t *testing.T) {
 	writer.Write([]byte("test"))
 	writer.Close()
 	tgz.Close()
-	tgzFile.Flush()
 
-	files, err := decompressAndListFiles(tgzFile)
+	files, err := decompressAndListFiles(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,29 +37,37 @@ func TestWritingAFile(t *testing.T) {
 
 func TestWritingToEmptyFileName(t *testing.T) {
 	b := bytes.Buffer{}
-	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
-	defer tgzFile.Flush()
 
-	tgz, err := NewTgz(tgzFile)
+	rand.Seed(0)
+
+	tgz, err := NewTgz(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tgz.Close()
 
 	writer := tgz.GetWriterToFile("")
-	writer.Write([]byte("test"))
-	err = writer.Close()
-	if err == nil {
-		t.Fatal("There should be an error when the filename is empty")
+	writer.Close()
+	writer = tgz.GetWriterToFile(" ")
+	writer.Close()
+	tgz.Close()
+
+	files, err := decompressAndListFiles(&b)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
+	want := map[string]struct{}{"untitled_f1f85ff5": {}, " ": {}}
+
+	if !reflect.DeepEqual(files, want) {
+		t.Fatal("got: %s, want: %s", files, want)
+	}
 }
 
 func TestWritingTwoFiles(t *testing.T) {
 	b := bytes.Buffer{}
-	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
 
-	tgz, err := NewTgz(tgzFile)
+	tgz, err := NewTgz(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,9 +81,8 @@ func TestWritingTwoFiles(t *testing.T) {
 	writer.Close()
 
 	tgz.Close()
-	tgzFile.Flush()
 
-	files, err := decompressAndListFiles(tgzFile)
+	files, err := decompressAndListFiles(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,9 +97,8 @@ func TestWritingTwoFiles(t *testing.T) {
 
 func TestWritingUTF8ToAFile(t *testing.T) {
 	b := bytes.Buffer{}
-	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
 
-	tgz, err := NewTgz(tgzFile)
+	tgz, err := NewTgz(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,9 +107,8 @@ func TestWritingUTF8ToAFile(t *testing.T) {
 	writer.Write([]byte("世界世形声字 / 形聲字界世界形声字 / 形聲字世界世界世界世形声字 / 形聲字界世界世界世界"))
 	writer.Close()
 	tgz.Close()
-	tgzFile.Flush()
 
-	files, err := decompressAndListFiles(tgzFile)
+	files, err := decompressAndListFiles(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,9 +130,8 @@ func getWriteTask(writer io.WriteCloser) task {
 
 func TestParallelWrites(t *testing.T) {
 	b := bytes.Buffer{}
-	tgzFile := bufio.NewReadWriter(bufio.NewReader(&b), bufio.NewWriter(&b))
 
-	tgz, err := NewTgz(tgzFile)
+	tgz, err := NewTgz(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,9 +159,8 @@ func TestParallelWrites(t *testing.T) {
 	wg.Wait()
 
 	tgz.Close()
-	tgzFile.Flush()
 
-	files, err := decompressAndListFiles(tgzFile)
+	files, err := decompressAndListFiles(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,8 +175,8 @@ func TestParallelWrites(t *testing.T) {
 
 }
 
-func decompressAndListFiles(tgzFile io.Reader) (map[string]string, error) {
-	ret := map[string]string{}
+func decompressAndListFiles(tgzFile io.Reader) (map[string]struct{}, error) {
+	ret := map[string]struct{}{}
 
 	gzf, err := gzip.NewReader(tgzFile)
 	if err != nil {
@@ -190,7 +192,7 @@ func decompressAndListFiles(tgzFile io.Reader) (map[string]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		ret[header.Name] = header.Name
+		ret[header.Name] = struct{}{}
 	}
 
 	return ret, nil

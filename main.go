@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,6 +31,9 @@ const (
 
 	// The version of the fh-system-dump-tool
 	version = "0.1.0"
+
+	// The RNG seed
+	randSeed = 422423
 )
 
 var (
@@ -133,6 +137,7 @@ func printError(err error) {
 }
 
 func main() {
+	rand.Seed(randSeed)
 	flag.Parse()
 
 	if *versionCheck {
