@@ -96,6 +96,12 @@ func GetAllTasks(basepath string) <-chan Task {
 			GetNagiosTasks(tasks, projects, basepath, getResourceNamesBySubstr)
 		}()
 
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			GetOcAdmDiagnosticsTasks(tasks, projects, basepath)
+		}()
+
 		wg.Wait()
 
 		// After all other tasks are done, add analysis tasks. We want
@@ -103,8 +109,8 @@ func GetAllTasks(basepath string) <-chan Task {
 		// output of commands executed previously by other tasks, e.g.,
 		// reading resource definitions.
 		for _, p := range projects {
-			outFor := outToFile(basepath, "json", "analysis")
-			errOutFor := outToFile(basepath, "stderr", "analysis")
+			outFor := outToFileForProject(basepath, "json", "analysis")
+			errOutFor := outToFileForProject(basepath, "stderr", "analysis")
 			tasks <- CheckTasks(p, outFor, errOutFor)
 		}
 	}()
@@ -114,6 +120,14 @@ func GetAllTasks(basepath string) <-chan Task {
 // NewError returns a Task that always return the given error.
 func NewError(err error) Task {
 	return func() error { return err }
+}
+
+// GetOcAdmDiagnosticsTasks will return an array of Tasks each of which will dump the oc admin diagnostics
+// data for the entire platform.
+func GetOcAdmDiagnosticsTasks(tasks chan<- Task, projects []string, basepath string) {
+	outFor := outToFileForPlatform(basepath, "stdout", "diagnostics")
+	errOutFor := outToFileForPlatform(basepath, "stderr", "diagnostics")
+	tasks <- OadmData(outFor, errOutFor)
 }
 
 // GetNagiosTasks sends tasks to dump Nagios data for each project that contain
@@ -129,12 +143,12 @@ func GetNagiosTasks(tasks chan<- Task, projects []string, basepath string, resou
 		}
 		for _, pod := range pods {
 			foundANagiosPod = true
-			outFor := outToFile(basepath, "dat", "nagios")
-			errOutFor := outToFile(basepath, "stderr", "nagios")
+			outFor := outToFileForProject(basepath, "dat", "nagios")
+			errOutFor := outToFileForProject(basepath, "stderr", "nagios")
 			tasks <- GetNagiosStatusData(p, pod, outFor, errOutFor)
 
-			outFor = outToFile(basepath, "tar", "nagios")
-			errOutFor = outToFile(basepath, "stderr", "nagios")
+			outFor = outToFileForProject(basepath, "tar", "nagios")
+			errOutFor = outToFileForProject(basepath, "stderr", "nagios")
 			tasks <- GetNagiosHistoricalData(p, pod, outFor, errOutFor)
 		}
 	}
@@ -149,8 +163,8 @@ func GetNagiosTasks(tasks chan<- Task, projects []string, basepath string, resou
 // FIXME: GetResourceDefinitionsTasks should not know about basepath.
 func GetResourceDefinitionsTasks(tasks chan<- Task, projects, resources []string, basepath string) {
 	for _, p := range projects {
-		outFor := outToFile(basepath, "json", "definitions")
-		errOutFor := outToFile(basepath, "stderr", "definitions")
+		outFor := outToFileForProject(basepath, "json", "definitions")
+		errOutFor := outToFileForProject(basepath, "stderr", "definitions")
 		tasks <- ResourceDefinitions(p, resources, outFor, errOutFor)
 	}
 }
@@ -174,8 +188,8 @@ func GetFetchLogsTasks(tasks chan<- Task, projects, resources []string, basepath
 		// Send task to fetch current logs.
 		{
 			// FIXME: Do not ignore errors.
-			out, outCloser, _ := outToFile(basepath, "logs", "logs")(r.Project, name)
-			errOut, errOutCloser, _ := outToFile(basepath, "stderr", "logs")(r.Project, name)
+			out, outCloser, _ := outToFileForProject(basepath, "logs", "logs")(r.Project, name)
+			errOut, errOutCloser, _ := outToFileForProject(basepath, "stderr", "logs")(r.Project, name)
 			tasks <- func() error {
 				defer outCloser.Close()
 				defer errOutCloser.Close()
@@ -185,8 +199,8 @@ func GetFetchLogsTasks(tasks chan<- Task, projects, resources []string, basepath
 		// Send task to fetch previous logs.
 		{
 			// FIXME: Do not ignore errors.
-			out, outCloser, _ := outToFile(basepath, "logs", "logs-previous")(r.Project, name)
-			errOut, errOutCloser, _ := outToFile(basepath, "stderr", "logs-previous")(r.Project, name)
+			out, outCloser, _ := outToFileForProject(basepath, "logs", "logs-previous")(r.Project, name)
+			errOut, errOutCloser, _ := outToFileForProject(basepath, "stderr", "logs-previous")(r.Project, name)
 			tasks <- func() error {
 				defer outCloser.Close()
 				defer errOutCloser.Close()
