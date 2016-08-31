@@ -79,7 +79,6 @@ func GetAllDumpTasks(runner Runner, basepath string) <-chan Task {
 		}
 		if len(projects) == 0 {
 			tasks <- NewError(errors.New("no projects visible to the currently logged in user"))
-			return
 		}
 
 		var wg sync.WaitGroup
